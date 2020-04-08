@@ -1,47 +1,42 @@
-class Model{
-  constructor(){
-    this.currentGeneration;
+class GameLogic{
+  constructor(rowCount, colCount){
     this.alive = true;
     this.dead = false;
   }
 
-  updateModel(board){
-    this.currentGeneration = board;
-  }
-
   advanceGeneration(board){
-    this.currentGeneration = board;
     let nextGeneration = [];
 
-    this.currentGeneration.forEach((row, rowIndex) => {
+    board.forEach((row, rowIndex) => {
       nextGeneration[rowIndex] = [];
       row.forEach((cell, cellIndex) => {
-        nextGeneration[rowIndex][cellIndex] = this.getNextCellState(rowIndex, cellIndex);
+        nextGeneration[rowIndex][cellIndex] = this.getNextCellState(rowIndex, cellIndex, board);
       });
     });
 
-    this.currentGeneration = nextGeneration;
-    return this.currentGeneration;
+    return nextGeneration;
   }
 
-  getNextCellState(row, col){
-    const currentCellState = this.currentGeneration[row][col];
-    const livingNeighbors = this.getLivingNeighbors(row, col);
+  getNextCellState(row, col, board){
+    const currentCellState = board[row][col];
+    const livingNeighbors = this.getLivingNeighbors(row, col, board);
 
     if (livingNeighbors === 3) return this.alive;
     if (currentCellState === this.alive && livingNeighbors ===2) return this.alive;
     return this.dead;
   }
 
-  getLivingNeighbors(cellRow, cellColumn){
+  getLivingNeighbors(cellRow, cellColumn, board){
     let livingNeighbors = 0;
 
     for(var rowOffset=-1; rowOffset<=1; rowOffset++){
       for(var colOffset=-1; colOffset<=1; colOffset++){
+        let isOriginalCell = (rowOffset === 0 && colOffset === 0)
+        if (isOriginalCell) continue;
         let neighborRow = cellRow+rowOffset;
         let neighborColumn = cellColumn+colOffset;
-        if(this.validateCords(neighborRow, neighborColumn)){
-          let livingCell = (this.currentGeneration[neighborRow][neighborColumn] === this.alive);
+        if(this.validateCords(neighborRow, neighborColumn, board)){
+          let livingCell = (board[neighborRow][neighborColumn] === this.alive);
           let CurrentCell = ((rowOffset==0) && (colOffset==0))
           if(livingCell && !CurrentCell) livingNeighbors++;
         }
@@ -51,15 +46,18 @@ class Model{
     return livingNeighbors;
   }
 
-  validateCords(row, col){
-    const maxRowValue = this.currentGeneration.length-1;
-    const maxColValue = this.currentGeneration[0].length - 1;
+  validateCords(row, col, board){
+    const maxRowValue = board.length-1;
+    const maxColValue = board[0].length - 1;
     if( (row<0) || (row >maxRowValue) ) return false;
     if( (col<0) || (col >maxColValue) ) return false;
-    if( (row===1) && (col===1)) return false;
     return true;
   }
 }
+
+
+
+
 
 class View{
   constructor(){
@@ -118,7 +116,7 @@ class View{
 class Controller{
   constructor(){
     this.view = new View();
-    this.model = new Model(this.view.getBoard());
+    this.model = new GameLogic();
     this.addResetEventListener();
     this.addNextEventListener();
   }
