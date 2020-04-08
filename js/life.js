@@ -1,17 +1,20 @@
 class Model{
-  constructor(seed){
-    this.currentGeneration = seed;
-    this.height = seed.length;
-    this.width = seed[0].length;
-    this.alive = 2;
-    this.dead = 1;
+  constructor(){
+    this.currentGeneration;
+    this.alive = true;
+    this.dead = false;
   }
 
-  advanceGeneration(){
-    let nextGeneration = new Array(this.currentGeneration.length);
+  updateModel(board){
+    this.currentGeneration = board;
+  }
+
+  advanceGeneration(board){
+    this.currentGeneration = board;
+    let nextGeneration = [];
 
     this.currentGeneration.forEach((row, rowIndex) => {
-      nextGeneration[rowIndex] = new Array(this.currentGeneration[rowIndex].length);
+      nextGeneration[rowIndex] = [];
       row.forEach((cell, cellIndex) => {
         nextGeneration[rowIndex][cellIndex] = this.getNextCellState(rowIndex, cellIndex);
       });
@@ -59,33 +62,93 @@ class Model{
 }
 
 class View{
-  constructor(size){
+  constructor(){
     this.gameBoard = document.getElementById("game-board");
-    this.size = size;
+    this.resetGameBoard();
+    this.checkboxes;
+    this.size;
   }
 
-  initializeGameBoard(s)
+  resetGameBoard(){
+    this.size = parseInt(document.getElementById("size").value, 10);
+    let fragment = document.createDocumentFragment();
+    this.checkboxes = [];
+
+    for(var row=0; row<this.size; row++){
+      var tableRow = document.createElement("tr");
+      tableRow.id = `game-board-row-${row+1}`;
+      this.checkboxes[row]=[];
+      for(var col=0; col<this.size; col++){
+        var tableData = document.createElement("td");
+        tableData.id = `cell-${row}-${col+1}`;
+        var checkbox = document.createElement("input");
+        checkbox.id = `checkbox-${row}-${col+1}`;
+        checkbox.type = 'checkbox';
+        tableData.appendChild(checkbox);
+        tableRow.appendChild(tableData);
+        this.checkboxes[row][col]=checkbox;
+      }
+      fragment.appendChild(tableRow);
+    }
+    this.gameBoard.innerHTML = "";
+    this.gameBoard.appendChild(fragment);
+  }
 
   displayBoard(boardState){
-    console.log(boardState);
+    for(var row=0; row<this.size; row++){
+      for(var col=0; col<this.size; col++){
+        this.checkboxes[row][col].checked = boardState[row][col];
+      }
+    }
+  }
+
+  getBoard(){
+    let board = [];
+    for(var row=0; row<this.size; row++){
+      board[row] = [];
+      for(var col=0; col<this.size; col++){
+        board[row][col]= this.checkboxes[row][col].checked;
+      }
+    }
+    console.log(board);
+    return board;
   }
 }
 
 class Controller{
-  constructor(model, view){
-    this.model = model;
-    this.view = view;
+  constructor(){
+    this.view = new View();
+    this.model = new Model(this.view.getBoard());
+    this.addResetEventListener();
+    this.addNextEventListener();
+  }
+
+  addResetEventListener(){
+    let resetButton = document.getElementById("reset");
+    resetButton.addEventListener("click", ()=>{
+      this.view.resetGameBoard();
+      this.model = new Model(this.view.getBoard());
+    });
+  }
+
+  addNextEventListener(){
+    let nextButton = document.getElementById("next");
+    nextButton.addEventListener("click", ()=>{
+      let board= this.model.advanceGeneration(this.view.getBoard());
+      this.view.displayBoard(board);
+    });
   }
 }
 
-const seed = [
-  [1,1,1,1,1],
-  [1,1,1,1,1],
-  [1,2,2,2,1],
-  [1,1,1,1,1],
-  [1,1,1,1,1]
-];
-const life = new Controller(new Model(seed), new View());
-let currentBoardState = life.model.advanceGeneration();
-life.view.displayBoard(seed);
-life.view.displayBoard(currentBoardState);
+let controller = new Controller();
+// const seed = [
+//   [false,false,false,false,false],
+//   [false,false,false,false,false],
+//   [false,true,true,true,false],
+//   [false,false,false,false,false],
+//   [false,false,false,false,false],
+// ];
+//const life = new Controller(new Model(seed), new View());
+//let currentBoardState = life.model.advanceGeneration();
+//life.view.getBoard();
+//life.view.displayBoard(currentBoardState);
